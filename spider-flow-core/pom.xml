@@ -13,6 +13,13 @@
 		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
 	</properties>
 	<dependencies>
+
+		<dependency>
+			<groupId>com.xenoamess</groupId>
+			<artifactId>nashorn</artifactId>
+			<version>jdk8u265-b01-x3</version>
+		</dependency>
+
 		<dependency>
 			<groupId>org.spiderflow</groupId>
 			<artifactId>spider-flow-api</artifactId>
