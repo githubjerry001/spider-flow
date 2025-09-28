@@ -19,21 +19,32 @@ import java.util.List;
 @Component
 public class ScheduleUtils {
 	
-	@Autowired
 	private static SpiderJobManager spiderJobManager;
 	
 	private static final String DATE_FORMAT = "yyyy-MM-dd HH:mm:ss";
 	
+	@Autowired
+	public void setSpiderJobManager(SpiderJobManager spiderJobManager) {
+		ScheduleUtils.spiderJobManager = spiderJobManager;
+	}
+	
 	public static Date addJob(SpiderFlow spiderFlow) {
+		if (spiderJobManager == null) {
+			return null;
+		}
 		return spiderJobManager.addJob(spiderFlow);
 	}
 	
 	public static void remove(String id) {
-		spiderJobManager.remove(id);
+		if (spiderJobManager != null) {
+			spiderJobManager.remove(id);
+		}
 	}
 	
 	public static void run(String id) {
-		spiderJobManager.run(id);
+		if (spiderJobManager != null) {
+			spiderJobManager.run(id);
+		}
 	}
 	
 	public static Date getNextExecuteTime(String cron) {

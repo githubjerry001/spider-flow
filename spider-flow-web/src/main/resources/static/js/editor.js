@@ -1154,12 +1154,26 @@ function Save(){
 				name : editor.graph.getModel().getRoot().data.get('spiderName') || '未定义名称',
 			},
 			success : function(id) {
-				flowId = id;
-				layui.layer.msg('保存成功', {
-					time : 800
-				}, function() {
-					// location.href = "spiderList.html";
-				})
+				if(id && typeof id === 'string') {
+					flowId = id;
+					layui.layer.msg('保存成功', {
+						time : 800
+					}, function() {
+						// location.href = "spiderList.html";
+					})
+				} else {
+					layui.layer.msg('保存失败，请重试', {
+						icon: 2,
+						time: 2000
+					});
+				}
+			},
+			error : function(xhr, status, error) {
+				console.error('保存失败:', xhr.responseText);
+				layui.layer.msg('保存失败: ' + (xhr.responseText || error), {
+					icon: 2,
+					time: 3000
+				});
 			}
 		})
 	});

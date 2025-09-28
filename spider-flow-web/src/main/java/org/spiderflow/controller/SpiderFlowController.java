@@ -90,12 +90,32 @@ public class SpiderFlowController {
 	
 	/**
 	 * 保存爬虫
-	 * @param spiderFlow 爬虫对象
-	 * @return boolean
+	 * @param id 爬虫id
+	 * @param name 爬虫名称
+	 * @param xml 爬虫XML配置
+	 * @return String 返回爬虫ID
 	 */
 	@PostMapping("/save")
-	public boolean save(@RequestBody SpiderFlow spiderFlow){
-		return spiderFlowService.save(spiderFlow);
+	public String save(@RequestParam(name = "id", required = false) String id, 
+					   @RequestParam(name = "name") String name, 
+					   @RequestParam(name = "xml") String xml){
+		try {
+			SpiderFlow spiderFlow = new SpiderFlow();
+			spiderFlow.setId(id);
+			spiderFlow.setName(name);
+			spiderFlow.setXml(xml);
+			
+			boolean success = spiderFlowService.save(spiderFlow);
+			if (success) {
+				// 如果是新增，返回生成的ID；如果是更新，返回原ID
+				return spiderFlow.getId();
+			} else {
+				throw new RuntimeException("保存失败");
+			}
+		} catch (Exception e) {
+			logger.error("保存爬虫失败", e);
+			throw new RuntimeException("保存爬虫失败: " + e.getMessage());
+		}
 	}
 	
 	/**
