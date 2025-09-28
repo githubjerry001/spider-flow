@@ -6,6 +6,7 @@ import java.util.List;
 
 import org.apache.commons.lang3.StringUtils;
 import org.spiderflow.core.model.DataSource;
+import org.spiderflow.core.model.Page;
 import org.spiderflow.core.service.DataSourceService;
 import org.spiderflow.core.utils.DataSourceUtils;
 import org.spiderflow.model.JsonBean;
@@ -13,10 +14,6 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
-
-import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
-import com.baomidou.mybatisplus.core.metadata.IPage;
-import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 
 @RestController
 @RequestMapping("/datasource")
@@ -26,8 +23,8 @@ public class DataSourceController {
 	private DataSourceService dataSourceService;
 	
 	@RequestMapping("/list")
-	public IPage<DataSource> list(@RequestParam(name = "page",defaultValue = "1")Integer page, @RequestParam(name = "limit",defaultValue = "1")Integer size) {
-		return dataSourceService.page(new Page<DataSource>(page, size), new QueryWrapper<DataSource>().select("id", "name", "driver_class_name", "create_date").orderByDesc("create_date"));
+	public Page<DataSource> list(@RequestParam(name = "page",defaultValue = "1")Integer page, @RequestParam(name = "limit",defaultValue = "1")Integer size) {
+		return dataSourceService.page(page, size);
 	}
 	
 	@RequestMapping("/all")
@@ -62,13 +59,13 @@ public class DataSourceController {
 		if(StringUtils.isBlank(dataSource.getDriverClassName())){
 			return new JsonBean<>(0, "DriverClassName不能为空！");
 		}
-		if(StringUtils.isBlank(dataSource.getJdbcUrl())){
+		if(StringUtils.isBlank(dataSource.getUrl())){
 			return new JsonBean<>(0, "jdbcUrl不能为空！");
 		}
 		Connection connection = null;
 		try {
 			Class.forName(dataSource.getDriverClassName());
-			String url = dataSource.getJdbcUrl();
+			String url = dataSource.getUrl();
 			String username = dataSource.getUsername();
 			String password = dataSource.getPassword();
 			if(StringUtils.isNotBlank(username)){

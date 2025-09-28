@@ -1,62 +1,74 @@
 package org.spiderflow.core.model;
 
-import com.baomidou.mybatisplus.annotation.IdType;
-import com.baomidou.mybatisplus.annotation.TableId;
-import com.baomidou.mybatisplus.annotation.TableName;
-
-import java.util.Date;
-
-@TableName("sp_function")
 public class Function {
 
-    @TableId(type = IdType.UUID)
-    private String id;
+	private String id;
+	
+	private String name;
+	
+	private String parameter;
+	
+	private String script;
+	
+	private String example;
+	
+	private String remark;
+	
+	private String returnType;
 
-    private String name;
+	public String getId() {
+		return id;
+	}
 
-    private String parameter;
+	public void setId(String id) {
+		this.id = id;
+	}
 
-    private String script;
+	public String getName() {
+		return name;
+	}
 
-    private Date createDate;
+	public void setName(String name) {
+		this.name = name;
+	}
 
-    public String getId() {
-        return id;
-    }
+	public String getParameter() {
+		return parameter;
+	}
 
-    public void setId(String id) {
-        this.id = id;
-    }
+	public void setParameter(String parameter) {
+		this.parameter = parameter;
+	}
 
-    public String getName() {
-        return name;
-    }
+	public String getScript() {
+		return script;
+	}
 
-    public void setName(String name) {
-        this.name = name;
-    }
+	public void setScript(String script) {
+		this.script = script;
+	}
 
-    public String getParameter() {
-        return parameter;
-    }
+	public String getExample() {
+		return example;
+	}
 
-    public void setParameter(String parameter) {
-        this.parameter = parameter;
-    }
+	public void setExample(String example) {
+		this.example = example;
+	}
 
-    public String getScript() {
-        return script;
-    }
+	public String getRemark() {
+		return remark;
+	}
 
-    public void setScript(String script) {
-        this.script = script;
-    }
+	public void setRemark(String remark) {
+		this.remark = remark;
+	}
 
-    public Date getCreateDate() {
-        return createDate;
-    }
+	public String getReturnType() {
+		return returnType;
+	}
 
-    public void setCreateDate(Date createDate) {
-        this.createDate = createDate;
-    }
+	public void setReturnType(String returnType) {
+		this.returnType = returnType;
+	}
 }

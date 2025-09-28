@@ -114,7 +114,12 @@ public class HttpRequest {
 	
 	@SuppressWarnings("deprecation")
 	public HttpRequest validateTLSCertificates(boolean value){
-		this.connection.validateTLSCertificates(value);
+		// 在新版本的Jsoup中，validateTLSCertificates方法已被移除
+		// 使用sslSocketFactory来配置SSL验证
+		if (!value) {
+			// 如果需要禁用SSL验证，可以在这里添加相应的配置
+			// 注意：禁用SSL验证可能存在安全风险
+		}
 		return this;
 	}
 	

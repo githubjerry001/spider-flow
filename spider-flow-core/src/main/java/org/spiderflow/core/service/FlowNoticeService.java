@@ -1,7 +1,5 @@
 package org.spiderflow.core.service;
 
-import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
-
 import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.HashMap;
@@ -27,9 +25,11 @@ import org.springframework.stereotype.Service;
 import org.springframework.util.StringUtils;
 
 @Service
-public class FlowNoticeService extends ServiceImpl<FlowNoticeMapper, FlowNotice> {
+public class FlowNoticeService {
 
 	private static final Logger logger = LoggerFactory.getLogger(FlowNoticeService.class);
+	@Autowired
+	private FlowNoticeMapper flowNoticeMapper;
 	@Autowired
 	private SpiderFlowMapper spiderFlowMapper;
 	@Autowired
@@ -43,12 +43,15 @@ public class FlowNoticeService extends ServiceImpl<FlowNoticeMapper, FlowNotice>
 	@Value("${spider.notice.content.exception}")
 	private String exceptionContext;
 
-	@Override
 	public boolean saveOrUpdate(FlowNotice entity) {
 		if (spiderFlowMapper.getCountById(entity.getId()) == 0) {
 			throw new RuntimeException("没有找到对应的流程");
 		}
-		return super.saveOrUpdate(entity);
+		return flowNoticeMapper.insert(entity) > 0;
+	}
+
+	public FlowNotice getById(String id) {
+		return flowNoticeMapper.selectById(id);
 	}
 
 	/**
@@ -60,7 +63,7 @@ public class FlowNoticeService extends ServiceImpl<FlowNoticeMapper, FlowNotice>
 	 * @date 2020年4月4日 上午1:37:50
 	 */
 	public void sendFlowNotice(SpiderFlow spiderFlow, FlowNoticeType type) {
-		FlowNotice notice = baseMapper.selectById(spiderFlow.getId());
+		FlowNotice notice = flowNoticeMapper.selectById(spiderFlow.getId());
 		if (notice != null && !StringUtils.isEmpty(notice.getRecipients())
 				&& !StringUtils.isEmpty(notice.getNoticeWay())) {
 			String content = null;

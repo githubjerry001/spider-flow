@@ -19,6 +19,29 @@
 		</dependency>
 	</dependencies>
 	<build>
+		<resources>
+			<resource>
+				<directory>src/main/resources</directory>
+				<includes>
+					<include>**/*.properties</include>
+					<include>**/*.sql</include>
+					<include>**/*.xml</include>
+					<include>**/*.yml</include>
+					<include>**/*.yaml</include>
+					<include>**/*.html</include>
+					<include>**/*.css</include>
+					<include>**/*.js</include>
+					<include>**/*.ico</include>
+					<include>**/*.png</include>
+					<include>**/*.jpg</include>
+					<include>**/*.gif</include>
+					<include>**/*.svg</include>
+					<include>**/*.woff</include>
+					<include>**/*.woff2</include>
+					<include>**/*.ttf</include>
+				</includes>
+			</resource>
+		</resources>
 		<plugins>
 			<plugin>
 				<groupId>org.springframework.boot</groupId>

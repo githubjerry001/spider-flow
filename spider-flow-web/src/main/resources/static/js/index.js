@@ -35,6 +35,10 @@ function openTab(title,id,href){
 	layui.element.tabChange("admin-tab",id);
 }
 $(function(){
+	// 直接初始化菜单，不依赖插件配置
+	initMenu();
+	
+	// 异步加载插件配置
 	$.ajax({
 		url:'spider/pluginConfigs',
 		success:function(data){
@@ -42,7 +46,10 @@ $(function(){
 				$(".menu-list .layui-nav-tree").append('<li class="layui-nav-item layui-nav-itemed"><a data-link="'+data[i].url+'" title="'+data[i].name+'">'+data[i].name+'</a></li>');
 			}
 			layui.element.init();
-			initMenu();
+		},
+		error:function(){
+			// 插件配置加载失败，但核心菜单已经初始化
+			console.log('插件配置加载失败，使用默认菜单');
 		}
 	})
 });

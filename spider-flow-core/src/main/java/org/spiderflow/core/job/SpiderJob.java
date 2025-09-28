@@ -68,7 +68,7 @@ public class SpiderJob extends QuartzJobBean {
 		Task task = new Task();
 		task.setFlowId(spiderFlow.getId());
 		task.setBeginTime(new Date());
-		taskService.save(task);
+		taskService.saveOrUpdate(task);
 		run(spiderFlow,task,nextExecuteTime);
 	}
 

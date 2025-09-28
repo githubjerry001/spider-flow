@@ -1,33 +1,48 @@
 package org.spiderflow.core.executor.shape;
 
+import java.io.ByteArrayInputStream;
+import java.io.FileInputStream;
+import java.io.FileOutputStream;
+import java.io.File;
+import java.io.IOException;
+import java.io.InputStream;
+import java.nio.charset.Charset;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Objects;
+
 import com.google.common.hash.BloomFilter;
 import com.google.common.hash.Funnel;
 import com.google.common.hash.Funnels;
+import jakarta.annotation.PostConstruct;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.exception.ExceptionUtils;
 import org.apache.commons.lang3.math.NumberUtils;
+import org.jsoup.Jsoup;
+import org.jsoup.nodes.Document;
+import org.jsoup.nodes.Element;
+import org.jsoup.select.Elements;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.spiderflow.Grammerable;
 import org.spiderflow.context.CookieContext;
 import org.spiderflow.context.SpiderContext;
+import org.spiderflow.executor.ShapeExecutor;
+import org.spiderflow.Grammerable;
+import org.spiderflow.listener.SpiderListener;
+import org.spiderflow.model.Grammer;
+import org.spiderflow.model.SpiderNode;
+import org.spiderflow.io.SpiderResponse;
 import org.spiderflow.core.executor.function.MD5FunctionExecutor;
 import org.spiderflow.core.io.HttpRequest;
 import org.spiderflow.core.io.HttpResponse;
 import org.spiderflow.core.utils.ExpressionUtils;
-import org.spiderflow.executor.ShapeExecutor;
-import org.spiderflow.io.SpiderResponse;
-import org.spiderflow.listener.SpiderListener;
-import org.spiderflow.model.Grammer;
-import org.spiderflow.model.SpiderNode;
+import org.spiderflow.core.utils.ExtractUtils;
+import org.spiderflow.executor.FunctionExecutor;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
-
-import javax.annotation.PostConstruct;
-import java.io.*;
-import java.nio.charset.Charset;
-import java.util.*;
 
 /**
  * 请求执行器

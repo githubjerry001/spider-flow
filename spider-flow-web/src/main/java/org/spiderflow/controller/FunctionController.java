@@ -1,11 +1,8 @@
 package org.spiderflow.controller;
 
-import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
-import com.baomidou.mybatisplus.core.metadata.IPage;
-import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import org.apache.commons.lang3.StringUtils;
-import org.spiderflow.core.model.DataSource;
 import org.spiderflow.core.model.Function;
+import org.spiderflow.core.model.Page;
 import org.spiderflow.core.service.FunctionService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -20,13 +17,8 @@ public class FunctionController {
     private FunctionService functionService;
 
     @RequestMapping("/list")
-    public IPage<Function> list(@RequestParam(name = "page",defaultValue = "1")Integer page, @RequestParam(name = "limit",defaultValue = "1")Integer size,String name) {
-        QueryWrapper<Function> select = new QueryWrapper<Function>().select("id", "name", "parameter", "create_date");
-        if(StringUtils.isNotBlank(name)){
-            select.like("name",name);
-        }
-        select.orderByDesc("create_date");
-        return functionService.page(new Page<Function>(page, size), select);
+    public Page<Function> list(@RequestParam(name = "page",defaultValue = "1")Integer page, @RequestParam(name = "limit",defaultValue = "1")Integer size,String name) {
+        return functionService.page(page, size, name);
     }
 
     @RequestMapping("/save")

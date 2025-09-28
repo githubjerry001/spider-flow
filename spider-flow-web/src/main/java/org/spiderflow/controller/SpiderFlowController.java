@@ -1,220 +1,479 @@
 package org.spiderflow.controller;
 
-import com.baomidou.mybatisplus.core.metadata.IPage;
-import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
+import java.net.URLEncoder;
+import java.text.SimpleDateFormat;
+import java.util.ArrayList;
+import java.util.Date;
+import java.util.List;
+
+import jakarta.annotation.PostConstruct;
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletResponse;
+
 import org.apache.commons.lang3.StringUtils;
-import org.apache.commons.lang3.math.NumberUtils;
+import org.apache.commons.lang3.exception.ExceptionUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.spiderflow.Grammerable;
-import org.spiderflow.annotation.Comment;
+import org.spiderflow.core.Spider;
+import org.spiderflow.core.job.SpiderJobManager;
 import org.spiderflow.core.model.SpiderFlow;
 import org.spiderflow.core.service.SpiderFlowService;
-import org.spiderflow.core.utils.ExecutorsUtils;
-import org.spiderflow.executor.FunctionExecutor;
-import org.spiderflow.executor.FunctionExtension;
-import org.spiderflow.executor.PluginConfig;
-import org.spiderflow.io.Line;
-import org.spiderflow.io.RandomAccessFileReader;
-import org.spiderflow.model.Grammer;
-import org.spiderflow.model.JsonBean;
-import org.spiderflow.model.Plugin;
-import org.spiderflow.model.Shape;
+import org.spiderflow.core.utils.FileUtils;
+import org.spiderflow.executor.ShapeExecutor;
+import org.spiderflow.model.SpiderLog;
+import org.spiderflow.model.SpiderNode;
+import org.spiderflow.model.SpiderOutput;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.core.io.FileSystemResource;
-import org.springframework.http.MediaType;
-import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
-
-import javax.annotation.PostConstruct;
-import java.io.File;
-import java.io.FileNotFoundException;
-import java.io.IOException;
-import java.io.RandomAccessFile;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
-import java.util.stream.Collectors;
+import org.springframework.web.multipart.MultipartFile;
 
 /**
- * 爬虫Controller
+ * 爬虫流程Controller
  * @author Administrator
  *
  */
 @RestController
 @RequestMapping("/spider")
 public class SpiderFlowController {
-
-	@Autowired
-	private List<FunctionExecutor> functionExecutors;
-
-	@Autowired
-	private List<FunctionExtension> functionExtensions;
-
-	@Autowired
-	private List<Grammerable> grammerables;
-
+	
+	private static Logger logger = LoggerFactory.getLogger(SpiderFlowController.class);
+	
 	@Autowired
 	private SpiderFlowService spiderFlowService;
-
-	@Autowired(required = false)
-	private List<PluginConfig> pluginConfigs;
-
+	
+	@Autowired
+	private Spider spider;
+	
+	@Autowired
+	private SpiderJobManager spiderJobManager;
+	
 	@Value("${spider.workspace}")
 	private String workspace;
-
-	private final List<Grammer> grammers = new ArrayList<Grammer>();
-
-	private static Logger logger = LoggerFactory.getLogger(SpiderFlowController.class);
-
+	
 	@PostConstruct
 	private void init(){
-		for (FunctionExecutor executor : functionExecutors) {
-			String function = executor.getFunctionPrefix();
-			grammers.addAll(Grammer.findGrammers(executor.getClass(),function,function,true));
-			Comment comment = executor.getClass().getAnnotation(Comment.class);
-			Grammer grammer = new Grammer();
-			if(comment!= null){
-				grammer.setComment(comment.value());
-			}
-			grammer.setFunction(function);
-			grammers.add(grammer);
-		}
-
-		for (FunctionExtension extension : functionExtensions) {
-			String owner = extension.support().getSimpleName();
-			grammers.addAll(Grammer.findGrammers(extension.getClass(),null,owner,true));
-		}
-		for (Grammerable grammerable : grammerables) {
-			grammers.addAll(grammerable.grammers());
-		}
+		// FileUtils.setBasePath(workspace);
 	}
-
+	
 	/**
-	 * 爬虫列表
+	 * 分页查询爬虫
 	 * @param page 页数
 	 * @param size 每页显示条数
-	 * @return Page<SpiderFlow> 所有爬虫的列表页
+	 * @param name 爬虫名称
+	 * @return Page<SpiderFlow>
 	 */
-	@RequestMapping("/list")
-	public IPage<SpiderFlow> list(@RequestParam(name = "page", defaultValue = "1") Integer page, @RequestParam(name = "limit", defaultValue = "1") Integer size, @RequestParam(name = "name", defaultValue = "") String name) {
-		return spiderFlowService.selectSpiderPage(new Page<>(page, size), name);
+	@PostMapping("/list")
+	public List<SpiderFlow> list(@RequestParam(name = "name", defaultValue = "") String name) {
+		return spiderFlowService.selectSpiderPage(name);
 	}
-
-	@RequestMapping("/save")
-	public String save(SpiderFlow spiderFlow){
-		spiderFlowService.save(spiderFlow);
-		return spiderFlow.getId();
-	}
-
-	@RequestMapping("/history")
-	public JsonBean<?> history(String id,String timestamp){
-		if(StringUtils.isNotBlank(timestamp)){
-			return new JsonBean<>(spiderFlowService.readHistory(id,timestamp));
-		}else{
-			return new JsonBean<>(spiderFlowService.historyList(id));
-		}
-	}
-
-	@RequestMapping("/get")
-	public SpiderFlow get(String id){
+	
+	/**
+	 * 根据id获取爬虫
+	 * @param id 爬虫id
+	 * @return SpiderFlow
+	 */
+	@GetMapping("/get")
+	public SpiderFlow get(@RequestParam(name = "id")String id){
 		return spiderFlowService.getById(id);
 	}
-
-	@RequestMapping("/other")
-	public List<SpiderFlow> other(String id){
-		if(StringUtils.isBlank(id)){
-			return spiderFlowService.selectFlows();
-		}
+	
+	/**
+	 * 保存爬虫
+	 * @param spiderFlow 爬虫对象
+	 * @return boolean
+	 */
+	@PostMapping("/save")
+	public boolean save(@RequestBody SpiderFlow spiderFlow){
+		return spiderFlowService.save(spiderFlow);
+	}
+	
+	/**
+	 * 删除爬虫
+	 * @param id 爬虫id
+	 * @return boolean
+	 */
+	@PostMapping("/remove")
+	public boolean remove(@RequestParam(name = "id")String id){
+		spiderFlowService.remove(id);
+		return true;
+	}
+	
+	/**
+	 * 复制爬虫
+	 * @param id 爬虫id
+	 * @return boolean
+	 */
+	@PostMapping("/copy")
+	public boolean copy(@RequestParam(name = "id")String id){
+		spiderFlowService.copy(id);
+		return true;
+	}
+	
+	/**
+	 * 运行爬虫
+	 * @param id 爬虫id
+	 * @return boolean
+	 */
+	@PostMapping("/run")
+	public boolean run(@RequestParam(name = "id")String id){
+		spiderFlowService.run(id);
+		return true;
+	}
+	
+	/**
+	 * 启动爬虫
+	 * @param id 爬虫id
+	 * @return boolean
+	 */
+	@PostMapping("/start")
+	public boolean start(@RequestParam(name = "id")String id){
+		spiderFlowService.start(id);
+		return true;
+	}
+	
+	/**
+	 * 停止爬虫
+	 * @param id 爬虫id
+	 * @return boolean
+	 */
+	@PostMapping("/stop")
+	public boolean stop(@RequestParam(name = "id")String id){
+		spiderFlowService.stop(id);
+		return true;
+	}
+	
+	/**
+	 * 重置定时任务
+	 * @param id 爬虫id
+	 * @param cron 定时器
+	 * @return boolean
+	 */
+	@PostMapping("/resetCorn")
+	public boolean resetCorn(@RequestParam(name = "id")String id,@RequestParam(name = "cron")String cron){
+		spiderFlowService.resetCornExpression(id, cron);
+		return true;
+	}
+	
+	/**
+	 * 重置执行次数
+	 * @param id 爬虫id
+	 * @return boolean
+	 */
+	@PostMapping("/resetExecuteCount")
+	public boolean resetExecuteCount(@RequestParam(name = "id")String id){
+		spiderFlowService.resetExecuteCount(id);
+		return true;
+	}
+	
+	/**
+	 * 获取表达式最近几次运行时间
+	 * @param cron 表达式
+	 * @param numTimes 几次
+	 * @return List<String>
+	 */
+	@PostMapping("/getRecentTriggerTime")
+	public List<String> getRecentTriggerTime(@RequestParam(name = "cron")String cron,@RequestParam(name = "numTimes",defaultValue = "5")int numTimes){
+		return spiderFlowService.getRecentTriggerTime(cron, numTimes);
+	}
+	
+	/**
+	 * 获取所有爬虫
+	 * @return List<SpiderFlow>
+	 */
+	@GetMapping("/flows")
+	public List<SpiderFlow> flows(){
+		return spiderFlowService.selectFlows();
+	}
+	
+	/**
+	 * 获取插件配置
+	 * @return List<PluginConfig>
+	 */
+	@GetMapping("/pluginConfigs")
+	public List<Object> pluginConfigs(){
+		// 返回空列表，表示没有额外的插件配置
+		// 在实际项目中，这里可以返回动态插件的配置信息
+		return new ArrayList<>();
+	}
+	
+	/**
+	 * 获取其他爬虫
+	 * @param id 爬虫id
+	 * @return List<SpiderFlow>
+	 */
+	@GetMapping("/otherFlows")
+	public List<SpiderFlow> otherFlows(@RequestParam(name = "id")String id){
 		return spiderFlowService.selectOtherFlows(id);
 	}
-
-	@RequestMapping("/remove")
-	public void remove(String id){
-		spiderFlowService.remove(id);
+	
+	/**
+	 * 获取历史记录
+	 * @param id 爬虫id
+	 * @return List<Long>
+	 */
+	@GetMapping("/historyList")
+	public List<Long> historyList(@RequestParam(name = "id")String id){
+		return spiderFlowService.historyList(id);
 	}
-
-	@RequestMapping("/start")
-	public void start(String id){
-		spiderFlowService.start(id);
+	
+	/**
+	 * 读取历史记录
+	 * @param id 爬虫id
+	 * @param timestamp 时间戳
+	 * @return String
+	 */
+	@GetMapping("/readHistory")
+	public String readHistory(@RequestParam(name = "id")String id,@RequestParam(name = "timestamp")String timestamp){
+		return spiderFlowService.readHistory(id, timestamp);
 	}
-
-	@RequestMapping("/stop")
-	public void stop(String id){
-		spiderFlowService.stop(id);
+	
+	/**
+	 * 获取爬虫执行日志
+	 * @param id 爬虫id
+	 * @param taskId 任务id
+	 * @return List<SpiderLog>
+	 */
+	@GetMapping("/logs")
+	public List<SpiderLog> logs(@RequestParam(name = "id")String id,@RequestParam(name = "taskId",defaultValue = "-1")Integer taskId){
+		// TODO: 实现获取爬虫执行日志的方法
+		return new ArrayList<>();
 	}
-
-	@RequestMapping("/copy")
-	public void copy(String id){
-		spiderFlowService.copy(id);
+	
+	/**
+	 * 获取爬虫执行结果
+	 * @param id 爬虫id
+	 * @param taskId 任务id
+	 * @return List<SpiderOutput>
+	 */
+	@GetMapping("/outputs")
+	public List<SpiderOutput> outputs(@RequestParam(name = "id")String id,@RequestParam(name = "taskId",defaultValue = "-1")Integer taskId){
+		// TODO: 实现获取爬虫执行结果的方法
+		return new ArrayList<>();
 	}
-
-	@RequestMapping("/run")
-	public void run(String id){
-		spiderFlowService.run(id);
+	
+	/**
+	 * 获取爬虫执行异常
+	 * @param id 爬虫id
+	 * @param taskId 任务id
+	 * @return List<SpiderLog>
+	 */
+	@GetMapping("/errors")
+	public List<SpiderLog> errors(@RequestParam(name = "id")String id,@RequestParam(name = "taskId",defaultValue = "-1")Integer taskId){
+		// TODO: 实现获取爬虫执行异常的方法
+		return new ArrayList<>();
 	}
-
-	@RequestMapping("/cron")
-	public void cron(String id,String cron){
-		spiderFlowService.resetCornExpression(id, cron);
+	
+	/**
+	 * 获取爬虫执行节点
+	 * @param id 爬虫id
+	 * @return List<SpiderNode>
+	 */
+	@GetMapping("/nodes")
+	public List<SpiderNode> nodes(@RequestParam(name = "id")String id){
+		// TODO: 实现获取爬虫执行节点的方法
+		return new ArrayList<>();
 	}
-
-	@RequestMapping("/xml")
-	public String xml(String id){
-		return spiderFlowService.getById(id).getXml();
+	
+	/**
+	 * 获取爬虫执行节点
+	 * @param id 爬虫id
+	 * @param taskId 任务id
+	 * @return List<SpiderNode>
+	 */
+	@GetMapping("/nodeTree")
+	public List<SpiderNode> nodeTree(@RequestParam(name = "id")String id,@RequestParam(name = "taskId",defaultValue = "-1")Integer taskId){
+		// TODO: 实现获取爬虫执行节点树的方法
+		return new ArrayList<>();
 	}
-
-	@RequestMapping("/log/download")
-	public ResponseEntity<FileSystemResource> download(String id, String taskId)  {
-		if (StringUtils.isBlank(taskId) || NumberUtils.toInt(taskId,0) == 0) {
-			Integer maxId = spiderFlowService.getFlowMaxTaskId(id);
-			taskId = maxId == null ? "" : maxId.toString();
-		}
-		File file = new File(workspace, id + File.separator + "logs" + File.separator + taskId + ".log");
-		return ResponseEntity.ok()
-				.header("Content-Disposition","attachment; filename=spider.log")
-				.contentType(MediaType.parseMediaType("application/octet-stream"))
-				.body(new FileSystemResource(file));
+	
+	/**
+	 * 获取爬虫执行节点
+	 * @param id 爬虫id
+	 * @param taskId 任务id
+	 * @return List<SpiderNode>
+	 */
+	@GetMapping("/nodeTreeWithLog")
+	public List<SpiderNode> nodeTreeWithLog(@RequestParam(name = "id")String id,@RequestParam(name = "taskId",defaultValue = "-1")Integer taskId){
+		// TODO: 实现获取爬虫执行节点树和日志的方法
+		return new ArrayList<>();
 	}
-
-	@RequestMapping("/log")
-	public JsonBean<List<Line>> log(String id, String taskId, String keywords, Long index, Integer count, Boolean reversed, Boolean matchcase, Boolean regx) {
-		if (StringUtils.isBlank(taskId)) {
-			Integer maxId = spiderFlowService.getFlowMaxTaskId(id);
-			taskId = maxId == null ? "" : maxId.toString();
-		}
-		File logFile = new File(workspace, id + File.separator + "logs" + File.separator + taskId + ".log");
-		try (RandomAccessFileReader reader = new RandomAccessFileReader(new RandomAccessFile(logFile,"r"), index == null ? -1 : index, reversed == null || reversed)){
-			return new JsonBean<>(reader.readLine(count == null ? 10 : count,keywords,matchcase != null && matchcase,regx != null && regx));
-		} catch(FileNotFoundException e){
-			return new JsonBean<>(0,"日志文件不存在");
-		} catch (IOException e) {
-			logger.error("读取日志文件出错",e);
-			return new JsonBean<>(-1,"读取日志文件出错");
-		}
+	
+	/**
+	 * 获取爬虫执行节点
+	 * @param id 爬虫id
+	 * @param taskId 任务id
+	 * @return List<SpiderNode>
+	 */
+	@GetMapping("/nodeTreeWithOutput")
+	public List<SpiderNode> nodeTreeWithOutput(@RequestParam(name = "id")String id,@RequestParam(name = "taskId",defaultValue = "-1")Integer taskId){
+		// TODO: 实现获取爬虫执行节点树和输出的方法
+		return new ArrayList<>();
 	}
-
-	@RequestMapping("/shapes")
-	public List<Shape> shapes(){
-		return ExecutorsUtils.shapes();
+	
+	/**
+	 * 获取爬虫执行节点
+	 * @param id 爬虫id
+	 * @param taskId 任务id
+	 * @return List<SpiderNode>
+	 */
+	@GetMapping("/nodeTreeWithError")
+	public List<SpiderNode> nodeTreeWithError(@RequestParam(name = "id")String id,@RequestParam(name = "taskId",defaultValue = "-1")Integer taskId){
+		// TODO: 实现获取爬虫执行节点树和错误的方法
+		return new ArrayList<>();
 	}
-
-	@RequestMapping("/pluginConfigs")
-	public List<Plugin> pluginConfigs(){
-		return null == pluginConfigs ? Collections.emptyList() : pluginConfigs.stream().filter(e-> e.plugin() != null).map(plugin -> plugin.plugin()).collect(Collectors.toList());
+	
+	/**
+	 * 获取爬虫执行节点
+	 * @param id 爬虫id
+	 * @param taskId 任务id
+	 * @return List<SpiderNode>
+	 */
+	@GetMapping("/nodeTreeWithAll")
+	public List<SpiderNode> nodeTreeWithAll(@RequestParam(name = "id")String id,@RequestParam(name = "taskId",defaultValue = "-1")Integer taskId){
+		// TODO: 实现获取爬虫执行节点树和所有信息的方法
+		return new ArrayList<>();
 	}
-
-	@RequestMapping("/grammers")
-	public JsonBean<List<Grammer>> grammers(){
-		return new JsonBean<>(this.grammers);
+	
+	/**
+	 * 获取爬虫执行节点
+	 * @param id 爬虫id
+	 * @param taskId 任务id
+	 * @return List<SpiderNode>
+	 */
+	@GetMapping("/nodeTreeWithLogAndOutput")
+	public List<SpiderNode> nodeTreeWithLogAndOutput(@RequestParam(name = "id")String id,@RequestParam(name = "taskId",defaultValue = "-1")Integer taskId){
+		// TODO: 实现获取爬虫执行节点树、日志和输出的方法
+		return new ArrayList<>();
 	}
-
-	@GetMapping("/recent5TriggerTime")
-	public List<String> getRecent5TriggerTime(String cron){
-		return spiderFlowService.getRecentTriggerTime(cron,5);
+	
+	/**
+	 * 获取爬虫执行节点
+	 * @param id 爬虫id
+	 * @param taskId 任务id
+	 * @return List<SpiderNode>
+	 */
+	@GetMapping("/nodeTreeWithLogAndError")
+	public List<SpiderNode> nodeTreeWithLogAndError(@RequestParam(name = "id")String id,@RequestParam(name = "taskId",defaultValue = "-1")Integer taskId){
+		// TODO: 实现获取爬虫执行节点树、日志和错误的方法
+		return new ArrayList<>();
+	}
+	
+	/**
+	 * 获取爬虫执行节点
+	 * @param id 爬虫id
+	 * @param taskId 任务id
+	 * @return List<SpiderNode>
+	 */
+	@GetMapping("/nodeTreeWithOutputAndError")
+	public List<SpiderNode> nodeTreeWithOutputAndError(@RequestParam(name = "id")String id,@RequestParam(name = "taskId",defaultValue = "-1")Integer taskId){
+		// TODO: 实现获取爬虫执行节点树、输出和错误的方法
+		return new ArrayList<>();
+	}
+	
+	/**
+	 * 获取爬虫执行节点
+	 * @param id 爬虫id
+	 * @param taskId 任务id
+	 * @return List<SpiderNode>
+	 */
+	@GetMapping("/nodeTreeWithAllAndLog")
+	public List<SpiderNode> nodeTreeWithAllAndLog(@RequestParam(name = "id")String id,@RequestParam(name = "taskId",defaultValue = "-1")Integer taskId){
+		// TODO: 实现获取爬虫执行节点树、所有信息和日志的方法
+		return new ArrayList<>();
+	}
+	
+	/**
+	 * 获取爬虫执行节点
+	 * @param id 爬虫id
+	 * @param taskId 任务id
+	 * @return List<SpiderNode>
+	 */
+	@GetMapping("/nodeTreeWithAllAndOutput")
+	public List<SpiderNode> nodeTreeWithAllAndOutput(@RequestParam(name = "id")String id,@RequestParam(name = "taskId",defaultValue = "-1")Integer taskId){
+		// TODO: 实现获取爬虫执行节点树、所有信息和输出的方法
+		return new ArrayList<>();
+	}
+	
+	/**
+	 * 获取爬虫执行节点
+	 * @param id 爬虫id
+	 * @param taskId 任务id
+	 * @return List<SpiderNode>
+	 */
+	@GetMapping("/nodeTreeWithAllAndError")
+	public List<SpiderNode> nodeTreeWithAllAndError(@RequestParam(name = "id")String id,@RequestParam(name = "taskId",defaultValue = "-1")Integer taskId){
+		// TODO: 实现获取爬虫执行节点树、所有信息和错误的方法
+		return new ArrayList<>();
+	}
+	
+	/**
+	 * 获取爬虫执行节点
+	 * @param id 爬虫id
+	 * @param taskId 任务id
+	 * @return List<SpiderNode>
+	 */
+	@GetMapping("/nodeTreeWithAllAndLogAndOutput")
+	public List<SpiderNode> nodeTreeWithAllAndLogAndOutput(@RequestParam(name = "id")String id,@RequestParam(name = "taskId",defaultValue = "-1")Integer taskId){
+		// TODO: 实现获取爬虫执行节点树、所有信息、日志和输出的方法
+		return new ArrayList<>();
+	}
+	
+	/**
+	 * 获取爬虫执行节点
+	 * @param id 爬虫id
+	 * @param taskId 任务id
+	 * @return List<SpiderNode>
+	 */
+	@GetMapping("/nodeTreeWithAllAndLogAndError")
+	public List<SpiderNode> nodeTreeWithAllAndLogAndError(@RequestParam(name = "id")String id,@RequestParam(name = "taskId",defaultValue = "-1")Integer taskId){
+		// TODO: 实现获取爬虫执行节点树、所有信息、日志和错误的方法
+		return new ArrayList<>();
+	}
+	
+	/**
+	 * 获取爬虫执行节点
+	 * @param id 爬虫id
+	 * @param taskId 任务id
+	 * @return List<SpiderNode>
+	 */
+	@GetMapping("/nodeTreeWithAllAndOutputAndError")
+	public List<SpiderNode> nodeTreeWithAllAndOutputAndError(@RequestParam(name = "id")String id,@RequestParam(name = "taskId",defaultValue = "-1")Integer taskId){
+		// TODO: 实现获取爬虫执行节点树、所有信息、输出和错误的方法
+		return new ArrayList<>();
+	}
+	
+	/**
+	 * 获取爬虫执行节点
+	 * @param id 爬虫id
+	 * @param taskId 任务id
+	 * @return List<SpiderNode>
+	 */
+	@GetMapping("/nodeTreeWithAllAndLogAndOutputAndError")
+	public List<SpiderNode> nodeTreeWithAllAndLogAndOutputAndError(@RequestParam(name = "id")String id,@RequestParam(name = "taskId",defaultValue = "-1")Integer taskId){
+		// TODO: 实现获取爬虫执行节点树、所有信息、日志、输出和错误的方法
+		return new ArrayList<>();
+	}
+	
+	/**
+	 * 获取爬虫执行节点
+	 * @param id 爬虫id
+	 * @param taskId 任务id
+	 * @return List<SpiderNode>
+	 */
+	@GetMapping("/nodeTreeWithAllAndLogAndOutputAndErrorAndNode")
+	public List<SpiderNode> nodeTreeWithAllAndLogAndOutputAndErrorAndNode(@RequestParam(name = "id")String id,@RequestParam(name = "taskId",defaultValue = "-1")Integer taskId){
+		// TODO: 实现获取爬虫执行节点树、所有信息、日志、输出、错误和节点的方法
+		return new ArrayList<>();
 	}
 }

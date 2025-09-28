@@ -1,11 +1,9 @@
 package org.spiderflow.controller;
 
-import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
-import com.baomidou.mybatisplus.core.metadata.IPage;
-import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import org.spiderflow.context.SpiderContext;
 import org.spiderflow.core.job.SpiderJob;
 import org.spiderflow.core.model.Task;
+import org.spiderflow.core.model.Page;
 import org.spiderflow.core.service.TaskService;
 import org.spiderflow.model.JsonBean;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -21,8 +19,8 @@ public class TaskController {
 	private TaskService taskService;
 
 	@RequestMapping("/list")
-	public IPage<Task> list(@RequestParam(name = "page", defaultValue = "1") Integer page, @RequestParam(name = "limit", defaultValue = "1") Integer size,String flowId){
-		return taskService.page(new Page<>(page,size),new QueryWrapper<Task>().eq("flow_id",flowId).last("order by isnull(end_time) desc,end_time desc"));
+	public Page<Task> list(@RequestParam(name = "page", defaultValue = "1") Integer page, @RequestParam(name = "limit", defaultValue = "1") Integer size,String flowId){
+		return taskService.page(page, size, flowId);
 	}
 
 	/**

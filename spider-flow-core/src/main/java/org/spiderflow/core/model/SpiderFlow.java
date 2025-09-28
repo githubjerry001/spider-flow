@@ -1,135 +1,124 @@
 package org.spiderflow.core.model;
 
-import com.baomidou.mybatisplus.annotation.IdType;
-import com.baomidou.mybatisplus.annotation.TableField;
-import com.baomidou.mybatisplus.annotation.TableId;
-import com.baomidou.mybatisplus.annotation.TableName;
-
 import java.util.Date;
 
-/**
- * 爬虫持久化实体类
- */
-@TableName("sp_flow")
 public class SpiderFlow {
+	
+	private String id;
+	
+	private String name;
+	
+	private String xml;
+	
+	private Date createDate;
+	
+	private Date updateDate;
+	
+	private Integer executeCount = 0;
+	
+	private Date lastExecuteTime;
+	
+	private Date nextExecuteTime;
+	
+	private String enabled = "0";
+	
+	private String cron;
+	
+	private String remark;
 
-    @TableId(type = IdType.UUID)
-    private String id;
+	public SpiderFlow() {
+	}
 
-    /**
-     * 定时任务表达式
-     */
-    private String cron;
+	public SpiderFlow(String id, String name) {
+		this.id = id;
+		this.name = name;
+	}
 
-    private String name;
+	public String getId() {
+		return id;
+	}
 
-    /**
-     * xml流程图
-     */
-    private String xml;
+	public void setId(String id) {
+		this.id = id;
+	}
 
-    private String enabled;
+	public String getName() {
+		return name;
+	}
 
-    private Date createDate;
+	public void setName(String name) {
+		this.name = name;
+	}
 
-    private Date lastExecuteTime;
+	public String getXml() {
+		return xml;
+	}
 
-    private Date nextExecuteTime;
+	public void setXml(String xml) {
+		this.xml = xml;
+	}
 
-    /**
-     * 定时执行的执行次数
-     */
-    private Integer executeCount;
+	public String getCron() {
+		return cron;
+	}
 
-    @TableField(exist = false)
-    private Integer running;
+	public void setCron(String cron) {
+		this.cron = cron;
+	}
 
+	public String getEnabled() {
+		return enabled;
+	}
 
-    public SpiderFlow() {
-    }
+	public void setEnabled(String enabled) {
+		this.enabled = enabled;
+	}
 
-    public SpiderFlow(String id, String name) {
-        this.id = id;
-        this.name = name;
-    }
+	public Date getCreateDate() {
+		return createDate;
+	}
 
-    public String getId() {
-        return id;
-    }
+	public void setCreateDate(Date createDate) {
+		this.createDate = createDate;
+	}
 
-    public void setId(String id) {
-        this.id = id;
-    }
+	public Date getUpdateDate() {
+		return updateDate;
+	}
 
-    public String getName() {
-        return name;
-    }
+	public void setUpdateDate(Date updateDate) {
+		this.updateDate = updateDate;
+	}
 
-    public void setName(String name) {
-        this.name = name;
-    }
+	public Integer getExecuteCount() {
+		return executeCount;
+	}
 
-    public String getXml() {
-        return xml;
-    }
+	public void setExecuteCount(Integer executeCount) {
+		this.executeCount = executeCount;
+	}
 
-    public void setXml(String xml) {
-        this.xml = xml;
-    }
+	public Date getLastExecuteTime() {
+		return lastExecuteTime;
+	}
 
-    public String getCron() {
-        return cron;
-    }
+	public void setLastExecuteTime(Date lastExecuteTime) {
+		this.lastExecuteTime = lastExecuteTime;
+	}
 
-    public void setCron(String cron) {
-        this.cron = cron;
-    }
+	public Date getNextExecuteTime() {
+		return nextExecuteTime;
+	}
 
-    public String getEnabled() {
-        return enabled;
-    }
+	public void setNextExecuteTime(Date nextExecuteTime) {
+		this.nextExecuteTime = nextExecuteTime;
+	}
 
-    public void setEnabled(String enabled) {
-        this.enabled = enabled;
-    }
+	public String getRemark() {
+		return remark;
+	}
 
-    public Date getCreateDate() {
-        return createDate;
-    }
-
-    public void setCreateDate(Date createDate) {
-        this.createDate = createDate;
-    }
-
-    public Date getLastExecuteTime() {
-        return lastExecuteTime;
-    }
-
-    public void setLastExecuteTime(Date lastExecuteTime) {
-        this.lastExecuteTime = lastExecuteTime;
-    }
-
-    public Date getNextExecuteTime() {
-        return nextExecuteTime;
-    }
-
-    public void setNextExecuteTime(Date nextExecuteTime) {
-        this.nextExecuteTime = nextExecuteTime;
-    }
-
-    public Integer getExecuteCount() {
-        return executeCount;
-    }
-
-    public void setExecuteCount(Integer executeCount) {
-        this.executeCount = executeCount;
-    }
-
-    public Integer getRunning() {
-        return running;
-    }
-
-    public void setRunning(Integer running) {
-        this.running = running;
-    }
+	public void setRemark(String remark) {
+		this.remark = remark;
+	}
 }

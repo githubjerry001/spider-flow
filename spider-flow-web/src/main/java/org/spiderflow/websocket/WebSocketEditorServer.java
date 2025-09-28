@@ -8,10 +8,10 @@ import org.spiderflow.model.SpiderWebSocketContext;
 import org.spiderflow.model.WebSocketEvent;
 import org.springframework.stereotype.Component;
 
-import javax.websocket.OnClose;
-import javax.websocket.OnMessage;
-import javax.websocket.Session;
-import javax.websocket.server.ServerEndpoint;
+import jakarta.websocket.OnClose;
+import jakarta.websocket.OnMessage;
+import jakarta.websocket.Session;
+import jakarta.websocket.server.ServerEndpoint;
 
 /**
  * WebSocket通讯编辑服务

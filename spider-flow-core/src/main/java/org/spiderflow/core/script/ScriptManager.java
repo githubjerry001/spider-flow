@@ -1,6 +1,6 @@
 package org.spiderflow.core.script;
 
-import jdk.nashorn.api.scripting.ScriptObjectMirror;
+import org.openjdk.nashorn.api.scripting.ScriptObjectMirror;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.spiderflow.core.expression.ExpressionTemplate;

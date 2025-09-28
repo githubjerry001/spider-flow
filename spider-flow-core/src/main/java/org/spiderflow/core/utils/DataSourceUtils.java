@@ -49,7 +49,7 @@ public class DataSourceUtils {
 		if(dataSource == null){
 			org.spiderflow.core.model.DataSource ds = dataSourceService.getById(dataSourceId);
 			if(ds != null){
-				dataSource = createDataSource(ds.getDriverClassName(), ds.getJdbcUrl(), ds.getUsername(), ds.getPassword());
+				dataSource = createDataSource(ds.getDriverClassName(), ds.getUrl(), ds.getUsername(), ds.getPassword());
 				datasources.put(dataSourceId, dataSource);
 			}
 		}

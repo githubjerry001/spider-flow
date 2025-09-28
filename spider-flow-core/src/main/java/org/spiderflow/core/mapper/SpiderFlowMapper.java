@@ -3,22 +3,31 @@ package org.spiderflow.core.mapper;
 import java.util.Date;
 import java.util.List;
 
-import com.baomidou.mybatisplus.core.metadata.IPage;
-import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
+import org.apache.ibatis.annotations.Delete;
 import org.apache.ibatis.annotations.Insert;
+import org.apache.ibatis.annotations.Mapper;
 import org.apache.ibatis.annotations.Param;
 import org.apache.ibatis.annotations.Select;
 import org.apache.ibatis.annotations.Update;
 import org.spiderflow.core.model.SpiderFlow;
 
-import com.baomidou.mybatisplus.core.mapper.BaseMapper;
-
-/**
- * 爬虫资源库 实现爬虫的入库
- * @author Administrator
- *
- */
-public interface SpiderFlowMapper extends BaseMapper<SpiderFlow>{
+@Mapper
+public interface SpiderFlowMapper {
+	
+	@Select("select * from sp_flow")
+	List<SpiderFlow> selectList();
+	
+	@Select("select * from sp_flow where id = #{id}")
+	SpiderFlow selectById(String id);
+	
+	@Insert("insert into sp_flow(id,name,xml,enabled,create_date) values(#{id},#{name},#{xml},#{enabled},#{createDate})")
+	int insert(SpiderFlow spiderFlow);
+	
+	@Update("update sp_flow set name = #{name},xml = #{xml},enabled = #{enabled},create_date = #{createDate} where id = #{id}")
+	int update(SpiderFlow spiderFlow);
+	
+	@Delete("delete from sp_flow where id = #{id}")
+	int deleteById(String id);
 
 	@Select({
 			"<script>",
@@ -32,7 +41,7 @@ public interface SpiderFlowMapper extends BaseMapper<SpiderFlow>{
 				"order by create_date desc",
 			"</script>"
 	})
-	IPage<SpiderFlow> selectSpiderPage(Page<SpiderFlow> page,@Param("name") String name);
+	List<SpiderFlow> selectSpiderPage(@Param("name") String name);
 
 	@Insert("insert into sp_flow(id,name,xml,enabled) values(#{id},#{name},#{xml},'0')")
 	int insertSpiderFlow(@Param("id") String id, @Param("name") String name, @Param("xml") String xml);
@@ -56,10 +65,10 @@ public interface SpiderFlowMapper extends BaseMapper<SpiderFlow>{
 	int resetSpiderStatus(@Param("id") String id, @Param("enabled") String enabled);
 
 	@Update("update sp_flow set next_execute_time = null where id = #{id}")
-	int resetNextExecuteTime(@Param("id") String id);
+	int resetNextExecuteTimeById(@Param("id") String id);
 
 	@Update("update sp_flow set next_execute_time = null")
-	int resetNextExecuteTime();
+	int resetAllNextExecuteTime();
 	
 	@Select("select id,name from sp_flow")
 	List<SpiderFlow> selectFlows();

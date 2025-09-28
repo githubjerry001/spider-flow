@@ -1,17 +1,15 @@
 package org.spiderflow.core.utils;
 
-import org.spiderflow.executor.ShapeExecutor;
-import org.spiderflow.model.Shape;
-import org.springframework.beans.BeansException;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.context.ApplicationContext;
-import org.springframework.context.ApplicationContextAware;
-import org.springframework.stereotype.Component;
-
-import javax.annotation.PostConstruct;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
+
+import jakarta.annotation.PostConstruct;
+import org.spiderflow.executor.ShapeExecutor;
+import org.spiderflow.model.Shape;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Component;
 
 /**
  * Created on 2020-03-11
@@ -19,7 +17,7 @@ import java.util.stream.Collectors;
  * @author Octopus
  */
 @Component
-public class ExecutorsUtils implements ApplicationContextAware {
+public class ExecutorsUtils {
 
     /**
      * 节点执行器列表 当前爬虫的全部流程
@@ -27,8 +25,6 @@ public class ExecutorsUtils implements ApplicationContextAware {
     private static List<ShapeExecutor> executors;
 
     private static Map<String, ShapeExecutor> executorMap;
-
-    private static ApplicationContext applicationContext;
 
     @Autowired
     ExecutorsUtils(List<ShapeExecutor> executors){
@@ -38,11 +34,6 @@ public class ExecutorsUtils implements ApplicationContextAware {
     @PostConstruct
     private void init() {
         executorMap = executors.stream().collect(Collectors.toMap(ShapeExecutor::supportShape, v -> v));
-    }
-
-    @Override
-    public void setApplicationContext(ApplicationContext applicationContext) throws BeansException {
-        ExecutorsUtils.applicationContext = applicationContext;
     }
 
     public static List<Shape> shapes(){
