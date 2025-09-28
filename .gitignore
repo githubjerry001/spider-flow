@@ -1,9 +1,42 @@
-target
+# Maven编译输出
+target/
+
+# IDE文件
 *.iml
 out/
-.idea
+.idea/
 .classpath
 .project
-.settings
+.settings/
 bin/
 .myeclipse
+
+# 编译生成的class文件
+*.class
+
+# 测试和调试文件
+Test*.java
+Check*.java
+Init*.java
+Start*.java
+Run*.java
+*Test.java
+
+# 数据库文件
+*.db
+*.mv.db
+*.trace.db
+data/
+h2-lib/
+
+# 临时文件
+*.tmp
+*.temp
+*.log
+
+# 其他无用文件
+BOOT-INF/
+static/index.html
+src/main/java/SimpleTest.java
+test-static/
+pom-test.xml

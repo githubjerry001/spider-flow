@@ -1,92 +1,119 @@
-# SpiderFlow
+# Spider-Flow
 
-![SpiderFlow Logo](https://www.spiderflow.org/images/logo.svg)
+一个基于Spring Boot的可视化网络爬虫开发平台，通过图形化界面来设计和管理网络爬虫流程。
 
-SpiderFlow 是一个基于 Java 的可视化爬虫平台，采用流程图的方式定义爬虫逻辑。它基于 Spring Boot 3.4.4 开发，支持 JDK 24+，提供高度灵活可配置的爬虫解决方案。
+## 特性
 
-通过可视化拖拽操作，用户可以轻松构建复杂的爬虫任务，无需编写复杂的代码即可实现数据抓取、处理和存储。
+- 🎨 **可视化设计** - 拖拽式流程图设计，无需编码
+- 🔍 **多解析支持** - XPath、JSONPath、CSS选择器、正则表达式
+- 🛠️ **灵活扩展** - 自定义函数、变量管理、数据源配置
+- 🔄 **任务调度** - 内置Quartz定时任务支持
+- 📊 **实时监控** - 任务执行状态、日志追踪
+- 📧 **通知服务** - 邮件通知支持
 
-[![JDK Version](https://img.shields.io/badge/JDK-24+-green.svg)](https://www.oracle.com/technetwork/java/javase/downloads/index.html)
-[![GitHub Release](https://img.shields.io/github/v/release/ssssssss-team/spider-flow?logo=github)](https://github.com/ssssssss-team/spider-flow/releases)
-[![License](https://img.shields.io/:license-MIT-blue.svg)](LICENSE)
+## 技术栈
 
-## 核心特性
-
-- 🎯 **可视化设计** - 通过流程图方式定义爬虫逻辑，直观易懂
-- 🔍 **多种数据提取** - 支持 XPath、JSONPath、CSS 选择器、正则表达式等多种提取方式
-- 🌐 **动态页面支持** - 支持 JS 渲染页面和 AJAX 数据抓取
-- 🗃️ **多数据源** - 支持 MySQL、H2 等多种数据库，提供完整的 SQL 操作支持
-- ⚙️ **灵活配置** - 支持代理、Cookie 管理、定时任务等高级功能
-- 🧩 **插件扩展** - 丰富的插件生态，支持 Selenium、Redis、MongoDB 等扩展
-- 📊 **任务监控** - 实时监控任务执行状态，提供详细的日志记录
+- **框架**: Spring Boot 3.4.4
+- **Java**: 24+
+- **数据库**: H2 (默认) / MySQL
+- **构建工具**: Maven 3.6+
+- **前端**: jQuery + Bootstrap
 
 ## 快速开始
 
 ### 环境要求
 
-- JDK 24 或更高版本
+- JDK 17+
 - Maven 3.6+
 
-### 本地运行
+### 安装运行
 
 ```bash
 # 克隆项目
-git clone https://github.com/ssssssss-team/spider-flow.git
-
-# 进入项目目录
+git clone https://github.com/githubjerry001/spider-flow.git
 cd spider-flow
 
-# 编译项目
+# 编译构建
 mvn clean install
 
-# 运行项目
+# 启动应用
+cd spider-flow-web
 mvn spring-boot:run
 ```
 
-访问地址：http://localhost:8088
+### 访问应用
 
-默认使用 H2 内存数据库，无需额外配置即可运行。
+打开浏览器访问: http://localhost:8088
 
-### 打包部署
+## 项目结构
 
-```bash
-# 打包项目
-mvn clean package
-
-# 运行打包后的应用
-java -jar spider-flow-web/target/spider-flow-web-0.5.0.jar
+```
+spider-flow/
+├── spider-flow-api/      # 核心API定义
+├── spider-flow-core/     # 核心业务逻辑实现
+├── spider-flow-web/      # Web应用层
+└── pom.xml               # Maven构建配置
 ```
 
-## 插件扩展
+## 配置说明
 
-SpiderFlow 支持丰富的插件扩展，满足不同场景需求：
+主要配置文件: `spider-flow-web/src/main/resources/application.properties`
 
-- Selenium插件 - 浏览器自动化操作
-- Redis插件 - Redis 数据库操作
-- OSS插件 - 对象存储服务支持
-- MongoDB插件 - MongoDB 数据库操作
-- IP代理池插件 - IP 代理池管理
-- OCR识别插件 - 图像文字识别功能
-- 电子邮箱插件 - 邮件收发功能
+```properties
+# 服务端口
+server.port=8088
 
-## 项目截图
+# 线程配置
+spider.thread.max=64
+spider.thread.default=8
 
-### 爬虫列表
-![爬虫列表](https://images.gitee.com/uploads/images/2020/0412/104521_e1eb3fbb_297689.png)
+# 定时任务
+spider.job.enable=false
 
-### 爬虫测试
-![爬虫测试](https://images.gitee.com/uploads/images/2020/0412/104659_b06dfbf0_297689.gif)
+# 数据库(默认H2文件模式)
+spring.datasource.url=jdbc:h2:file:./data/spider-flow
+```
 
-### Debug 调试
-![Debug](https://images.gitee.com/uploads/images/2020/0412/104741_f9e1190e_297689.png)
+## 使用指南
 
-### 日志查看
-![日志](https://images.gitee.com/uploads/images/2020/0412/104800_a757f569_297689.png)
+1. **创建流程** - 点击“新建”，拖拽组件设计爬虫流程
+2. **配置节点** - 双击节点设置参数(链接、选择器等)
+3. **运行测试** - 点击“运行”按钮测试流程
+4. **数据输出** - 配置输出组件保存数据
+5. **定时任务** - 设置Cron表达式定时执行
+
+## 核心组件
+
+| 组件 | 说明 |
+|------|------|
+| 开始 | 流程入口点 |
+| 请求 | HTTP请求组件 |
+| 变量 | 定义和赋值变量 |
+| 循环 | 列表数据循环处理 |
+| 输出 | 数据结果输出 |
+| 函数 | 执行自定义函数 |
+
+## 开发指南
+
+### 自定义函数
+
+在“函数管理”中添加JavaScript函数：
+
+```javascript
+function customFunction(param) {
+    // 自定义逻辑
+    return result;
+}
+```
+
+### 数据源配置
+
+支持MySQL、PostgreSQL等关系型数据库，在“数据源管理”中添加配置。
 
 ## 许可证
 
-本项目采用 MIT 许可证，详情请查看 [LICENSE](LICENSE) 文件。
+Apache License 2.0
 
-## 免责声明
+## 贡献
 
-请勿将 SpiderFlow 应用到任何可能会违反法律规定和道德约束的工作中。请友善使用 SpiderFlow，遵守蜘蛛协议，不要将 SpiderFlow 用于任何非法用途。如您选择使用 SpiderFlow 即代表您遵守此协议，作者不承担任何由于您违反此协议带来任何的法律风险和损失，一切后果由您承担。
+欢迎提交Issue和Pull Request。关法律法规，合理使用网络爬虫技术。
