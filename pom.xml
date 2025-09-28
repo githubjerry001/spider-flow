@@ -6,7 +6,7 @@
 	<version>0.5.0</version>
 	<packaging>pom</packaging>
 	<name>spider-flow</name>
-	<url>https://gitee.com/jmxd/spider-flow</url>
+	<url>https://github.com/githubjerry001/spider-flow</url>
 
 	<parent>
 		<groupId>org.springframework.boot</groupId>
