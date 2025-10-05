@@ -131,5 +131,4 @@ public class FlowNoticeService {
 		SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss.SSS");
 		return sdf.format(new Date());
 	}
-
 }

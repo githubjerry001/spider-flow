@@ -128,5 +128,4 @@ public class FlowNotice {
 		}
 		return false;
 	}
-
 }

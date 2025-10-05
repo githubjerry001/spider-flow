@@ -1,5 +1,6 @@
 package org.spiderflow;
 
+import java.io.File;
 import java.io.IOException;
 import java.sql.Connection;
 import java.sql.DriverManager;
@@ -36,12 +37,21 @@ public class SpiderApplication implements ServletContextInitializer{
 	
 	private static void initDatabase() {
 		try {
+			// 检查数据库文件是否存在
+			File dbFile = new File("./data/spider-flow.mv.db");
+			if (dbFile.exists()) {
+				System.out.println("Database file already exists, skipping initialization.");
+				return;
+			}
+			
+			System.out.println("Database file not found, initializing new database...");
+			
 			// 加载H2驱动
 			Class.forName("org.h2.Driver");
 			
-			// 连接到H2内存数据库（使用与应用程序相同的URL）
+			// 连接到H2文件数据库（使用与配置文件相同的URL）
 			Connection conn = DriverManager.getConnection(
-				"jdbc:h2:mem:testdb;DB_CLOSE_DELAY=-1;DB_CLOSE_ON_EXIT=FALSE;MODE=MySQL", 
+				"jdbc:h2:file:./data/spider-flow;DB_CLOSE_DELAY=-1;DB_CLOSE_ON_EXIT=FALSE;MODE=MySQL", 
 				"sa", 
 				""
 			);

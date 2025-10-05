@@ -19,7 +19,8 @@ public class MyBatisConfig {
     public DataSource dataSource() {
         DriverManagerDataSource dataSource = new DriverManagerDataSource();
         dataSource.setDriverClassName("org.h2.Driver");
-        dataSource.setUrl("jdbc:h2:file:./data/spider-flow;AUTO_SERVER=TRUE");
+        // 使用与application.properties一致的数据库URL
+        dataSource.setUrl("jdbc:h2:file:./data/spider-flow;DB_CLOSE_DELAY=-1;DB_CLOSE_ON_EXIT=FALSE;MODE=MySQL");
         dataSource.setUsername("sa");
         dataSource.setPassword("");
         return dataSource;
@@ -29,8 +30,9 @@ public class MyBatisConfig {
     public SqlSessionFactory sqlSessionFactory(DataSource dataSource) throws Exception {
         SqlSessionFactoryBean sessionFactory = new SqlSessionFactoryBean();
         sessionFactory.setDataSource(dataSource);
-        sessionFactory.setMapperLocations(new PathMatchingResourcePatternResolver()
-                .getResources("classpath*:mapper/*.xml"));
+        // 由于所有Mapper都使用注解方式，不需要设置XML映射文件
+        // sessionFactory.setMapperLocations(new PathMatchingResourcePatternResolver()
+        //         .getResources("classpath*:mapper/*.xml"));
         return sessionFactory.getObject();
     }
 

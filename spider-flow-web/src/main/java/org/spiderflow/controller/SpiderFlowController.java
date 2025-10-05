@@ -7,6 +7,8 @@ import java.io.InputStream;
 import java.io.OutputStream;
 import java.net.URLEncoder;
 import java.text.SimpleDateFormat;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
@@ -14,6 +16,8 @@ import java.util.List;
 import jakarta.annotation.PostConstruct;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
+
+import org.apache.commons.lang3.StringUtils;
 
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.exception.ExceptionUtils;
@@ -71,11 +75,20 @@ public class SpiderFlowController {
 	 * @param page 页数
 	 * @param size 每页显示条数
 	 * @param name 爬虫名称
-	 * @return Page<SpiderFlow>
+	 * @return Page格式的数据，包含records和total字段
 	 */
 	@PostMapping("/list")
-	public List<SpiderFlow> list(@RequestParam(name = "name", defaultValue = "") String name) {
-		return spiderFlowService.selectSpiderPage(name);
+	public Map<String, Object> list(@RequestParam(name = "name", defaultValue = "") String name) {
+		List<SpiderFlow> flows = spiderFlowService.selectSpiderPage(name);
+		
+		// 构造前端期望的分页格式
+		Map<String, Object> result = new HashMap<>();
+		result.put("records", flows);  // 数据列表
+		result.put("total", flows.size());  // 总数量
+		result.put("code", 0);  // 状态码
+		result.put("msg", "success");  // 消息
+		
+		return result;
 	}
 	
 	/**
@@ -100,20 +113,35 @@ public class SpiderFlowController {
 					   @RequestParam(name = "name") String name, 
 					   @RequestParam(name = "xml") String xml){
 		try {
+			logger.info("保存爬虫请求 - ID: {}, Name: {}, XML length: {}", id, name, xml != null ? xml.length() : 0);
+			
+			// 验证参数
+			if (StringUtils.isBlank(name)) {
+				throw new IllegalArgumentException("爬虫名称不能为空");
+			}
+			if (StringUtils.isBlank(xml)) {
+				throw new IllegalArgumentException("爬虫XML配置不能为空");
+			}
+			
 			SpiderFlow spiderFlow = new SpiderFlow();
-			spiderFlow.setId(id);
-			spiderFlow.setName(name);
+			spiderFlow.setId(StringUtils.isNotBlank(id) ? id : null);
+			spiderFlow.setName(name.trim());
 			spiderFlow.setXml(xml);
+			spiderFlow.setCreateDate(new Date());
 			
 			boolean success = spiderFlowService.save(spiderFlow);
 			if (success) {
-				// 如果是新增，返回生成的ID；如果是更新，返回原ID
+				logger.info("保存爬虫成功 - ID: {}, Name: {}", spiderFlow.getId(), name);
 				return spiderFlow.getId();
 			} else {
+				logger.error("保存爬虫失败 - ID: {}, Name: {}", id, name);
 				throw new RuntimeException("保存失败");
 			}
+		} catch (IllegalArgumentException e) {
+			logger.error("参数验证失败 - ID: {}, Name: {}, Error: {}", id, name, e.getMessage());
+			throw new RuntimeException(e.getMessage());
 		} catch (Exception e) {
-			logger.error("保存爬虫失败", e);
+			logger.error("保存爬虫异常 - ID: {}, Name: {}", id, name, e);
 			throw new RuntimeException("保存爬虫失败: " + e.getMessage());
 		}
 	}
@@ -125,8 +153,15 @@ public class SpiderFlowController {
 	 */
 	@PostMapping("/remove")
 	public boolean remove(@RequestParam(name = "id")String id){
-		spiderFlowService.remove(id);
-		return true;
+		try {
+			logger.info("删除爬虫请求 - ID: {}", id);
+			spiderFlowService.remove(id);
+			logger.info("删除爬虫成功 - ID: {}", id);
+			return true;
+		} catch (Exception e) {
+			logger.error("删除爬虫失败 - ID: {}", id, e);
+			throw new RuntimeException("删除失败: " + e.getMessage());
+		}
 	}
 	
 	/**

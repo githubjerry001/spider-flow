@@ -79,23 +79,43 @@ public class SpiderFlowService {
 	}
 	
 	public boolean save(SpiderFlow spiderFlow){
-		//解析corn,获取并设置任务的开始时间
-		if(StringUtils.isNotEmpty(spiderFlow.getCron())){
-			spiderFlow.setNextExecuteTime(ScheduleUtils.getNextExecuteTime(spiderFlow.getCron()));
-		}
-		if(StringUtils.isNotEmpty(spiderFlow.getId())){	//update 任务
-			sfMapper.updateSpiderFlow(spiderFlow.getId(), spiderFlow.getName(), spiderFlow.getXml());
-			ScheduleUtils.remove(spiderFlow.getId());
-			spiderFlow = getById(spiderFlow.getId());
-			if("1".equals(spiderFlow.getEnabled()) && StringUtils.isNotEmpty(spiderFlow.getCron())){
-				ScheduleUtils.addJob(spiderFlow);
+		try {
+			logger.info("SpiderFlowService.save - ID: {}, Name: {}", spiderFlow.getId(), spiderFlow.getName());
+			
+			// 设置创建时间
+			if (spiderFlow.getCreateDate() == null) {
+				spiderFlow.setCreateDate(new Date());
 			}
-		}else{//insert 任务
-			String id = UUID.randomUUID().toString().replace("-", "");
-			sfMapper.insertSpiderFlow(id, spiderFlow.getName(), spiderFlow.getXml());
-			spiderFlow.setId(id);
+			
+			//解析corn,获取并设置任务的开始时间
+			if(StringUtils.isNotEmpty(spiderFlow.getCron())){
+				spiderFlow.setNextExecuteTime(ScheduleUtils.getNextExecuteTime(spiderFlow.getCron()));
+			}
+			
+			if(StringUtils.isNotEmpty(spiderFlow.getId())){	//update 任务
+				logger.info("更新爬虫 - ID: {}", spiderFlow.getId());
+				int result = sfMapper.updateSpiderFlow(spiderFlow.getId(), spiderFlow.getName(), spiderFlow.getXml());
+				logger.info("更新结果: {}", result);
+				
+				ScheduleUtils.remove(spiderFlow.getId());
+				SpiderFlow updated = getById(spiderFlow.getId());
+				if(updated != null && "1".equals(updated.getEnabled()) && StringUtils.isNotEmpty(updated.getCron())){
+					ScheduleUtils.addJob(updated);
+				}
+				return result > 0;
+			}else{//insert 任务
+				String id = UUID.randomUUID().toString().replace("-", "");
+				logger.info("新增爬虫 - 生成ID: {}", id);
+				int result = sfMapper.insertSpiderFlow(id, spiderFlow.getName(), spiderFlow.getXml());
+				logger.info("新增结果: {}", result);
+				
+				spiderFlow.setId(id);
+				return result > 0;
+			}
+		} catch (Exception e) {
+			logger.error("保存爬虫异常", e);
+			return false;
 		}
-		return true;
 	}
 
 	public void stop(String id){
@@ -130,8 +150,18 @@ public class SpiderFlowService {
 		sfMapper.resetExecuteCount(id);
 	}
 	public void remove(String id){
-		sfMapper.deleteById(id);
-		ScheduleUtils.remove(id);
+		try {
+			logger.info("SpiderFlowService.remove - ID: {}", id);
+			int result = sfMapper.deleteById(id);
+			logger.info("删除结果: {}", result);
+			ScheduleUtils.remove(id);
+			if (result == 0) {
+				logger.warn("删除爬虫失败，可能不存在 - ID: {}", id);
+			}
+		} catch (Exception e) {
+			logger.error("删除爬虫异常 - ID: {}", id, e);
+			throw new RuntimeException("删除失败: " + e.getMessage());
+		}
 	}
 
 	public List<SpiderFlow> selectOtherFlows(String id){
